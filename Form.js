@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './Form.css';
 
-function SimpleForm() {
+
+function SimpleForm({ settargetWord }) {
+
     const [formState, setFormState] = useState({
         targetWord: '',
         URL: '',
@@ -15,6 +17,8 @@ function SimpleForm() {
         const value = target.value;
         const name = target.name;
 
+
+
         setFormState({
             ...formState,
             [name]: value
@@ -23,7 +27,7 @@ function SimpleForm() {
 
     function initialBatch(e) {
         e.preventDefault()
-
+        settargetWord(formState.targetWord)
         axios.get('http://localhost:8001/activateSearch', {
             params: {
                 targetWord: formState.targetWord,

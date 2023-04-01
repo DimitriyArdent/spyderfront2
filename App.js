@@ -1,42 +1,28 @@
 /* eslint-disable */
-import logo from './logo.svg';
 import './App.css';
-import axios from 'axios';
 import AWS from 'aws-sdk';
 import React, { useState, useEffect } from "react";
 import SimpleForm from './Form'
-
+import { targetWordSpotter, advancedSearch } from './functions/functions'
 
 
 function App() {
-  const [targetWord, settargetWord] = useState('for');
+  const [targetWord, settargetWord] = useState('');
   const [res, setres] = useState([]);
-  const [res2, setres2] = useState([]);
+  const [advancesRes, setadvancesRes] = useState([]);
 
   const [testW, settestW] = useState('');
   const [selectedKey, setSelectedKey] = useState(null);
   const [firstBatchData, setfirstBatchData] = useState(true)
   const [responseReceived, setresponseReceived] = useState(false)
 
-  const [effectflag, seteffectflag] = useState('----')
 
 
 
   let response = []
+  let advancedResponse = []
 
 
-  const sqs = new AWS.SQS({
-    region: 'us-east-1',
-    accessKeyId: 'AKIARUXX3267DWG2UCCM',
-    secretAccessKey: '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'
-  });
-
-
-  useEffect(() => {
-
-    seteffectflag('+++++')
-
-  }, [res]);
 
 
 
@@ -54,11 +40,10 @@ function App() {
     /// RENDER MESSAGE DATA
     response = await sqs.receiveMessage(params).promise()
 
-
     if (response.Messages.length > 0) {
-      setres(prevRes => [...prevRes, ...JSON.parse(response.Messages[0].Body)])
-      setres2(prevRes => [...prevRes, JSON.parse(response.Messages[0].Body)])
+      console.log(JSON.parse(response.Messages[0].Body))
 
+      setres(prevRes => [...prevRes, ...JSON.parse(response.Messages[0].Body)])
       ///DELETING MESSAGE
       var deleteParams = {
         QueueUrl: 'https://sqs.us-east-1.amazonaws.com/113262712766/frontFromQueryer',
@@ -67,10 +52,48 @@ function App() {
       await sqs.deleteMessage(deleteParams).promise();
 
     }
-    else {
-      //if (document.getElementsByClassName('row').length > 0) return
-      waitingForFirstBatch()
+
+
+    waitingForFirstBatch()
+
+
+
+  }
+
+
+
+  waitingForFirstBatch()
+
+
+  async function waitingForNextBatches() {
+    // RECIVING MESSAGE
+    const params = {
+      QueueUrl: 'https://sqs.us-east-1.amazonaws.com/113262712766/Advanced_Frontfromqueryer', // message that contains the first batch set
+      MaxNumberOfMessages: 1,
+    };
+
+
+    advancedResponse = await sqs.receiveMessage(params).promise()
+    if (advancedResponse?.Messages?.length > 0) {
+      // what we have there: array of objects, each object has depth, array of word occurences, and his father URL
+      // now we need to find the father url on the screen, and insert each one of doughter url's with the phrases that belongs to this url
+      let resNextLevels = JSON.parse(advancedResponse.Messages[0].Body)  // new level
+      /*
+            if (parseInt(resNextLevels[0].values.Depth) === 2 && response.Messages != []) {              // if level 2
+      
+              let oldArray = JSON.parse(response.Messages[0].Body)            // get the initial array (res == [] no clue why)
+      
+              let matchingObject = oldArray.find(oldar => oldar.key === resNextLevels[0].fatherUrl) // if level 1 key url == father url of level 2
+      
+              matchingObject.children = resNextLevels  // inserting into previous level object new field that contain all of his URLs
+      
+              setres(oldArray)  // one object in this array was altered
+              return;
+            }*/
+      console.log('hi')
+
     }
+
 
 
   }
@@ -79,7 +102,8 @@ function App() {
 
 
 
-  waitingForFirstBatch()
+
+
 
 
   return (
@@ -90,9 +114,8 @@ function App() {
       <br></br>
 
 
-      <SimpleForm></SimpleForm>
+      <SimpleForm settargetWord={settargetWord} ></SimpleForm>
 
-      <div>{effectflag}</div>
 
       {res && (
         <div>
@@ -105,11 +128,31 @@ function App() {
 
                   {selectedKey === obj.key && (   // if selected url == url of phrases
                     <div>
-                      <div onClick={(e) => advancedSearch(obj.key)}>get!!!!!!!!!</div>
+                      <div className='cursor' onClick={(e) => advancedSearch(obj.key, obj.depth)}>get!!!!!!!!!</div>
                       {JSON.parse(obj.phrases).map(phrases => (
 
-                        <div id='phrases' onClick={(e) => advancedSearch(obj.key)} className='phraseRow' key={phrases}>{targetWordSpotter(phrases)}</div>  // the phrases here (inside the f())
+                        <div id='phrases' className='phraseRow' key={phrases}>{targetWordSpotter(phrases, targetWord)}</div>  // the phrases here (inside the f())
                       ))}
+
+
+                      {res.hasOwnProperty('children') &&
+
+                        res.children.map((grandchild) => {
+                          <div className='right'>
+                            <div>{grandchild.values.phrases}</div>
+                            <div>{grandchild.values.Depth}</div>
+                          </div>
+                        })
+
+                      }
+
+
+
+
+
+
+
+
                     </div>
                   )}
 

@@ -1,10 +1,10 @@
 /* eslint-disable */
+import axios from 'axios';
 
 
-
-export function advancedSearch(e) {        // finds the hited URL
+export function advancedSearch(clickedURL, depth) {        // finds the hited URL
     axios.get('http://localhost:8001/get-data', {
-        params: { targetLink: e }
+        params: { targetLink: clickedURL, depth: depth }
 
 
     }).then((res) => {
@@ -14,8 +14,8 @@ export function advancedSearch(e) {        // finds the hited URL
 }
 
 
-export function targetWordSpotter(phrases) {  // color the target word
-    let temporarySplittedArray = phrases.split(targetWord)
+export function targetWordSpotter(phrases, targetWord) {  // color the target word
+    let temporarySplittedArray = phrases.split(new RegExp(targetWord, "i"))
     return <div   >
         <span className='nonTargetWord'>{temporarySplittedArray[0]}</span>
         <span className='targetWord'>{targetWord}</span>

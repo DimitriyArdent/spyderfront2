@@ -24,3 +24,11 @@
 .phraseRow {
   margin: 10px;
 }
+
+.cursor {
+  cursor: pointer;
+}
+
+.right {
+  margin-left: 300px;
+}
